@@ -1,10 +1,14 @@
 require 'sinatra'
 require './cache'
+require './prediction_repository'
+require './yandex_predictor_client'
 
-require "better_errors" if development?
-require "sinatra/reloader" if development?
-require 'colorize' if development?
-require 'pry' if development?
+if development?
+  require 'better_errors'
+  require 'sinatra/reloader'
+  require 'colorize'
+  require 'pry'
+end
 
 configure :development do
   use BetterErrors::Middleware
@@ -12,21 +16,21 @@ configure :development do
 end
 
 get '/' do
-  api_key = params[:key]
-  query = params[:q]
+  query_params = params.select { |k, _| %w(key q lang limit).include?(k) }
 
   content_type :json
-
-  return {}.to_json if api_key.nil? || query.nil?
+  return {}.to_json if query_params['key'].nil? || query_params['q'].nil?
 
   begin
-    return Cache.get(api_key, query).to_json
-  rescue YandexError => e
+    client = YandexPredictorClient.new
+    cache = Cache.new
+    repository = PredictionRepository.new(client, cache)
+
+    return repository.get_prediction(query_params).raw
+  rescue => e
     return {
       error: e.class,
       message: e
     }.to_json
   end
-
-
 end

@@ -1,47 +1,38 @@
+require 'singleton'
 require 'redis'
-require 'json'
-require './yandex_predictor'
 
-PREFIX = 'yandex_predictor'
+PREFIX = 'yandex_predictor'.freeze
 
 class YandexError < StandardError; end
 
 class Cache
-  class << self
-    def get(api_key, query)
-      redis = Redis.new
-      prediction = redis.get(redis_key(query))
+  attr_reader :redis
 
-      if prediction.nil?
-        puts 'cache miss, fetching from Yandex'.yellow if verbose?
-        result = YandexPredictor.get(api_key, query)
+  def initialize
+    redis_to_go_url = ENV['REDISTOGO_URL']
 
-        puts 'Updating cache'.yellow if verbose?
-        parsed = JSON.parse(result)
-        if parsed['code']
-          fail YandexError, parsed.to_s
-        end
-
-        redis.set(redis_key(query), result)
-
-        puts 'Done'.yellow if verbose?
-
-        return parsed
+    @redis =
+      if redis_to_go_url
+        uri = URI(redis_to_go_url)
+        Redis.new(host: uri.host, port: uri.port, password: uri.password)
       else
-        puts 'cache hit'.yellow if verbose?
-        parsed = JSON.parse(prediction)
-        return parsed
+        Redis.new(host: 'localhost', port: 6379)
       end
-    end
+  end
 
-    private
+  def set(query, value)
+    key = redis_key(query)
+    @redis.set(key, value)
+  end
 
-    def redis_key(query)
-      "#{PREFIX}:#{query}"
-    end
+  def get(query)
+    key = redis_key(query)
+    @redis.get(key)
+  end
 
-    def verbose?
-      true
-    end
+  private
+
+  def redis_key(query)
+    "#{PREFIX}:#{query}"
   end
 end

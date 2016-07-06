@@ -7,7 +7,8 @@ gem 'sinatra-contrib'
 group :development do
   gem 'pry'
   gem 'pry-nav'
-  gem "better_errors"
+  gem 'better_errors'
   gem 'colorize'
-  gem "binding_of_caller"
+  gem 'rspec'
+  gem 'rubocop'
 end
