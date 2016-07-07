@@ -1,7 +1,5 @@
 require 'sinatra'
-require './cache'
 require './prediction_repository'
-require './yandex_predictor_client'
 
 if development?
   require 'better_errors'
@@ -15,16 +13,17 @@ configure :development do
   BetterErrors.application_root = __dir__
 end
 
+PERMITTED_PARAMS = %w(key q lang limit).freeze
+EMPTY_JSON = '{}'
+
 get '/' do
-  query_params = params.select { |k, _| %w(key q lang limit).include?(k) }
+  query_params = params.select { |k, _| PERMITTED_PARAMS.include?(k) }
 
   content_type :json
-  return {}.to_json if query_params['key'].nil? || query_params['q'].nil?
+  return EMPTY_JSON if query_params['key'].nil? || query_params['q'].nil?
 
   begin
-    client = YandexPredictorClient.new
-    cache = Cache.new
-    repository = PredictionRepository.new(client, cache)
+    repository = PredictionRepository.new
 
     return repository.get_prediction(query_params).raw
   rescue => e

@@ -5,9 +5,6 @@ require 'uri'
 API_URL = 'https://predictor.yandex.net/api/v1/predict.json/complete'.freeze
 
 class YandexPredictorClient
-  def initialize
-  end
-
   def fetch_prediction(query)
     url = build_url(query)
     Net::HTTP.get(URI(url))

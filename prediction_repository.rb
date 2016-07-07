@@ -1,9 +1,11 @@
 require './prediction'
+require './cache'
+require './yandex_predictor_client'
 
 class PredictionRepository
-  def initialize(client, cache)
-    @client = client
-    @cache = cache
+  def initialize
+    @client = YandexPredictorClient.new
+    @cache = Cache.new
   end
 
   def get_prediction(query)
