@@ -22,14 +22,13 @@ get '/' do
   content_type :json
   return EMPTY_JSON if query_params['key'].nil? || query_params['q'].nil?
 
-  begin
-    repository = PredictionRepository.new
+  repository = PredictionRepository.new
+  prediction = repository.get_prediction(query_params)
 
-    return repository.get_prediction(query_params).raw
-  rescue => e
-    return {
-      error: e.class,
-      message: e
-    }.to_json
+  if prediction.valid?
+    return prediction.raw
+  else
+    status 422
+    "Invalid request"
   end
 end
