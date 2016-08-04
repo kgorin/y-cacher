@@ -13,9 +13,7 @@ configure :development do
   BetterErrors.application_root = __dir__
 end
 
-set :protection, true
-set :protect_from_csrf, true
-set :allow_disabled_csrf, true
+set :protection, except: [:json_csrf]
 
 PERMITTED_PARAMS = %w(key q lang limit).freeze
 EMPTY_JSON = '{}'
